@@ -1,0 +1,26 @@
+version: '3'
+services:
+  42crunch.test:
+    image: 42crunch/apifirewall:latest
+    ports:
+      - '4241:4241'
+      - '8880:8880'
+    volumes:
+      - ./storage/apifirewall/ssl:/opt/guardian/conf/ssl
+      - ./storage/apifirewall/logs:/opt/guardian/logs
+    command: ["/bin/squire", "-platform", "protection.42crunch.com:8001", "-debug"]
+    environment:
+      - PROTECTION_TOKEN=${PROTECTION_TOKEN}
+      - LISTEN_PORT=4241
+      - LISTEN_NO_TLS=TRUE
+      - TARGET_URL=http://172.23.27.45:8092
+      - SERVER_NAME=api.al-dawaa.com
+      - GUARDIAN_NODE_NAME=VM-UBUNTU-172-23-27-112
+      - GUARDIAN_INSTANCE_NAME=POC-TEST
+      - LOG_LEVEL=DEBUG
+      - LOG_DESTINATION=PLATFORM
+      - BACKEND_TLS_CHECK_PEER_NAME=off
+      - BACKEND_TLS_CHECK_PEER_EXPIRE=off
+
+
+
