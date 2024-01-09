@@ -29,5 +29,6 @@ audit:
   branches:
     main:
       discovery:
+        search:
         - OAS-files/*.yaml
         
