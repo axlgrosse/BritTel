@@ -1107,7 +1107,8 @@ components:
       properties:
         client_id:
           description: Client identifier/API key of the partner.
-          type: string 
+          type: string
+          maxLength: 35
         scope:
           description: |- 
             <p>Space delimited parameters identifying the requested scopes.</p>
