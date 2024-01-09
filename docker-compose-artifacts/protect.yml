@@ -12,11 +12,11 @@ services:
     environment:
       - PROTECTION_TOKEN=${PROTECTION_TOKEN}
       - LISTEN_PORT=443
-      - TARGET_URL=https://api.openweathermap.org
+      - TARGET_URL=https://api-sandbox.ee.co.uk
       - LISTEN_SSL_CERT=full-cert-chain.pem
       - LISTEN_SSL_KEY=key.pem
       - SERVER_NAME=pixi-secured.42crunch.test:4241
-      - GUARDIAN_NODE_NAME=Local-Firewall
+      - GUARDIAN_NODE_NAME=BT-API-Firewall
       - GUARDIAN_INSTANCE_NAME=Local-Firewall
       - LOG_LEVEL=DEBUG
       - LOG_DESTINATION=PLATFORM+STDOUT
