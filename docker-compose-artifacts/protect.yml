@@ -1,6 +1,6 @@
 version: '3'
 services:
-  secured.42crunch.test:
+  secure.42crunch.test:
     image: 42crunch/apifirewall:latest
     ports:
       - '4241:443'

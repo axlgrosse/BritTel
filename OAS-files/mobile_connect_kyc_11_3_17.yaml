@@ -190,7 +190,7 @@ paths:
             application/json:
              schema:
                 $ref: '#/components/schemas/FailureResponse'
-             example: {"error": "access_denied", "error_description": "Access denied"} 
+             example: {"error": "access_denied", "error_description": "Access-denied"} 
 
         '500':    # status code
           description: |
