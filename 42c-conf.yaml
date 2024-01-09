@@ -28,7 +28,13 @@
 audit:
   branches:
     main:
-      discovery:
-        search:
-        - OAS-files/*.yaml
+      mapping:
+        bt_oauth2.yaml: a5a89390-25e3-40f6-a31c-af654e169e3b
+        mobile_connect_kyc_11_3_17.yaml: d7e5c673-4df0-4993-b176-4cca0c65139a
+      discovery: false
+
+
+#      discovery:
+#        search:
+#        - OAS-files/*.yaml
         
