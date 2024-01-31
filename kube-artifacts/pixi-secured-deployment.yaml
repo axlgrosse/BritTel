@@ -21,8 +21,8 @@ spec:
   # loadBalancerIP: 
   ports:
   - name: firewall
-    port: 443
-    targetPort: 8443
+    port: 8080
+    targetPort: 8081
   selector:
     app: apifirewall
 
@@ -67,7 +67,7 @@ spec:
             path: /hc
             port: 8880
         ports:
-          - containerPort: 8443
+          - containerPort: 8081
         env:
         - name: GUARDIAN_NODE_NAME
           valueFrom:
@@ -97,10 +97,10 @@ spec:
         envFrom:
         - configMapRef:
             name: firewall-props
-        volumeMounts:
-        - name: certs-volume
-          mountPath: /opt/guardian/conf/ssl
-          readOnly: true
+#        volumeMounts:
+#        - name: certs-volume
+#          mountPath: /opt/guardian/conf/ssl
+#          readOnly: true
 #      - name: pixiapp
 #        image: 42crunch/pixi:app_v2
 #        imagePullPolicy: Always
