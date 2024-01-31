@@ -104,7 +104,7 @@ spec:
 #      - name: pixiapp
 #        image: 42crunch/pixi:app_v2
 #        imagePullPolicy: Always
-      volumes:
-        - name: certs-volume
-          secret:
-            secretName: firewall-certs
+#      volumes:
+#        - name: certs-volume
+#          secret:
+#            secretName: firewall-certs

@@ -13,7 +13,7 @@ if [ -z "$RUNTIME_NS" ]; then
     exit -1
 fi
 
-kubectl create namespace $RUNTIME_NS
+#kubectl create namespace $RUNTIME_NS
 # Create secrets
 echo "===========> Creating Secrets"
  #kubectl create --namespace=$RUNTIME_NS secret tls firewall-certs --key ./etc/tls/private.key --cert ./etc/tls/fullchain-cert-with-ca.pem
