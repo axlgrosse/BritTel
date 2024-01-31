@@ -1,0 +1,1195 @@
+openapi: "3.0.2"
+info:
+  title: Know Your Customer
+  description: |-
+
+    <p>Know Your Customer (KYC) match offers a mechanism through which a service provider can submit end user (customer) information to validate such as name, address, mobile telephone number to a mobile network operator for comparison against their records. The mobile network operator will then confirm whether these values match their records. The purpose being to prove the authenticity of an end user, so long as the customer has consented to this. </p>    
+
+  version: '0.36'
+servers:
+  - url: https://api.ee.co.uk
+    description: Production  
+  - url: https://api-sandbox.ee.co.uk
+    description: Sandbox 
+
+paths:
+
+  /v1/mobile-connect/authorize:
+    get:
+      summary: Get authorize
+      operationId: mobile-connect-getauthorize
+      description: |- 
+        <p>This resource is used by a service provider to initiate an OpenID/Mobile Connect authorize.</p>
+
+        <details>
+        <summary><b>Sandbox responses</b></summary>
+        <p>The sandbox supports a number of success and failure scenarios which can be simulated by using a MSISDN or PCR value listed in the tables below.</p>
+        <details>
+        <summary><b>Success scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447000543012 | 200 | Successful KYC match for EE PAYM customer. |
+        | 447000815077 | 200 | Successful KYC match for EE PAYG customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYM customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYG customer.  | 
+
+        
+        </details>           
+        <details>
+        <summary><b>Error scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447884740574 | 302 | Any technical exception from backend service.	| 
+        | 447884740584 | 302 | SUBSCRIPTION_NOT_FOUND | 
+        | 447884740590 | 302 | Status is not  activated. |
+        | 447884740587 | 302 | MSISDN_NOT_FOUND |
+        | 447996121324 | 302 | Requested product is not in active state.	| 
+        | 447997045095 | 302 | Customer’s mobile account is not in active/partially active state.	| 
+        | PCR:01bfae5f-0047-44ec-9da3-dc837e | 302 | Requested PCR reference not found.	|
+
+        </details>
+        </details>
+
+
+      x-codeSamples:
+        - lang: 'HTML'
+          label: cURL
+          source: |                 
+                  curl -XGET https://api-sandbox.ee.co.uk/v1/mobile-connect/authorize?client_id=as87d8sa7d68sa7d&
+                  client_id=as87d8sa7d68sa7d&
+                  scope=openid mc_kyc_hashed&
+                  login_hint=MSISDN:447700900999&
+                  client_name=testclient&
+                  response_type=code&
+                  redirect_uri=https://mycompany.com&
+                  state=sdfdsfdsfds987f98sdfdsfdsf&
+                  nonce=34456456&
+                  correlation_id=b84e52fc-5b5d-4926-a6f3-42a4633d25e2&
+                  claims={"premiuminfo":{"nameHash": {"value": "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"},"nameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"addressHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"addressMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"firstNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"firstNameMatch": {"essential": false,"values": ["N-AV"]},"lastNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"lastNameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"postcodeHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"postcodeMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]}},"birthdate": {"value": "1984-07-26"},"birthdateMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"isLostStolen": {"essential": true},"billingSegment": {"essential": true}}
+
+      security:
+        - OAuth2: []  
+      parameters:
+# irrelevant i a GET as there is no body 
+#        - name: Content-Type
+#          in: header
+#          description: The only supported format for the request body is 'application/x-www-form-urlencoded'.
+#          required: false
+#          schema: 
+#            type: string 
+        - name: client_id
+          in: query
+          description: Client identifier/API key of the partner.
+          required: true
+          schema: 
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: scope
+          in: query
+          description: |- 
+            <p>Space delimited parameters identifying the requested scopes.</p>
+            <p>The allowed scope combinations are: 'openid mc_kyc_hashed' and 'openid mc_kyc_plain'.</p>
+          required: true
+          schema: 
+            type: string
+            enum:
+              - "openid mc_kyc_hashed"
+              - "openid mc_kyc_plain"
+        - name: login_hint
+          in: query
+          description: |-
+           <p>This can contain either a plain text MSISDN, the encrypted MSISDN or a PCR (Pseudonymous Customer Reference).</p>
+           <p>e.g. 'MSISDN:447700900999', 'ENCR_MSISDN:xxxxxxxx' or 'PCR:f70f33e4-64d7-49de-b7a6-51b560819b84'</p>
+          required: true
+          schema: 
+            type: string
+            pattern: ^[a-zA-Z0-9:-_]{1,100}$
+        - name: client_name
+          in: query
+          description: |-
+           <p>A short application name as indicated in the Discovery API. </p>
+           <p>Alphanumeric characters are supported.</p>
+          schema: 
+            type: string
+            pattern: ^[a-zA-Z0-9]$
+        - name: response_type
+          in: query
+          description: |-
+           <p>This should always be set to 'code'.</p>
+          required: true
+          schema: 
+            type: string
+            enum:
+              - "code"
+        - name: redirect_uri
+          in: query
+          description: |-
+           <p>The location where the authorisation server sends the user once the app has been successfully authorised and granted an authorisation code or access token.</p>
+          required: true
+          schema: 
+            type: string  
+        - name: state
+          in: query
+          description: |-
+           <p>This parameter will hold the session information to echo back to the partner.</p>
+           <p>Alphanumeric characters are supported.</p>        
+          required: true
+          schema: 
+            type: string
+            pattern: ^[a-zA-Z0-9]$   
+        - name: nonce
+          in: query
+          description: |-
+           <p>A randomly generated value valid for a single session, to mitigate any replay attacks.</p>
+           <p>Alphanumeric characters are supported.</p>        
+          required: true
+          schema: 
+            type: string
+            pattern: ^[a-zA-Z0-9]$ 
+        - name: claims
+          in: query
+          description: |-
+           <p>KYC Product: JSON containing the attributes submitted by the partner relating to the customer.</p> 
+           <p>The <i>name</i> and <i>address</i> values accept alphanumeric characters only.</p>
+          required: true
+          schema: 
+            type: string
+            format: json 
+        - name: correlation_id
+          in: query
+          description: |-
+            <p>This is optional, used to track unique transactions end to endpoint.</p>
+            <p><i>correlation_id</i> must be provided in UUID format (a 36-character alphanumeric string 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX').</p> 
+          required: false
+          schema: 
+            type: string
+            format: uuid
+            pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+            minLength: 36
+            maxLength: 36
+            example: a83a29f5-0d63-46f2-8f2e-44c2f1d2e07e
+            x-42c-format: o:uuid           
+      responses: 
+        '302' :
+          description: |
+            Found
+          content:        
+            application/json:
+              examples:
+                Success, correlation_id sent in the request:
+                  value: 'Location: {redirect_uri}?code=687324&state=4387598345h34uihiu&correlation_id=b84e52fc-5b5d-4926-a6f3-42a4633d25e2'
+                Success, correlation_id not sent in the request:
+                  value: 'Location: {redirect_uri}?code=687324&state=4387598345h34uihiu' 
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: |-
+                Location where the user agent must redirect this request to for further action. The redirection will contain the following query parameters:
+
+                | Parameter | Description | 
+                | ---- | ------------------ |
+                | code | Authorisation code returned for web applications when session exists. This value retrieved from the response is used in the <a href='#operation/mobile-connect-token'>Token</a> resource as a body parameter. | 
+                | state | This parameter will only be returned if it was supplied in the request. | 
+        '403':    # status code
+          description: |
+            Forbidden
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | access_denied | Access denied | The <i>client_id</i> / <i>redirect_uri</i> is missing or incorrect. |
+ 
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "access_denied", "error_description": "Access-denied"} 
+
+        '500':    # status code
+          description: |
+            Internal Server Error
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | server_error | Internal error occurred | For any internal errors. |
+ 
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "server_error", "error_description": "Internal error occurred"}     
+    
+    post:
+      summary: Post authorize
+      operationId: mobile-connect-postauthorize
+      description: |- 
+        <p>This resource is used by a service provider to initiate an OpenID/Mobile Connect authorize.</p>
+
+        <details>
+        <summary><b>Sandbox responses</b></summary>
+        <p>The sandbox supports a number of success and failure scenarios which can be simulated by using a MSISDN or PCR value listed in the tables below.</p>
+        <details>
+        <summary><b>Success scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447000543012 | 200 | Successful KYC match for EE PAYM customer. |
+        | 447000815077 | 200 | Successful KYC match for EE PAYG customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYM customer. | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYG customer. | 
+
+        
+        </details>           
+        <details>
+        <summary><b>Error scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447997045095 | 302 | Customer’s mobile account is not in active/partially active state.	| 
+        | 447996121324 | 302 | Requested product is not in active state.	| 
+        | PCR:01bfae5f-0047-44ec-9da3-dc837e | 302 | Requested PCR reference not found.	|
+        | 447884740574 | 302 | Any technical exception from backend service.	| 
+        | 447884740584 | 302 | SUBSCRIPTION_NOT_FOUND | 
+        | 447884740590 | 302 | Status is not  activated. |
+        | 447884740587 | 302 | MSISDN_NOT_FOUND |
+
+        </details>
+        </details>
+
+
+      x-codeSamples:
+        - lang: 'HTML'
+          label: cURL
+          source: |                 
+                  curl -XPOST 
+                  -H "Content-Type: application/x-www-form-urlencoded"
+                  https://api-sandbox.ee.co.uk/v1/mobile-connect/authorizeclient_id=as87d8sa7d68sa7d&
+          payload:        
+                  'client_id=as87d8sa7d68sa7d&
+                  scope=openid mc_kyc_hashed&
+                  login_hint=MSISDN:447700900999&
+                  client_name=testclient&
+                  response_type=code&
+                  redirect_uri=https://mycompany.com&
+                  state=sdfdsfdsfds987f98sdfdsfdsf&
+                  nonce=34456456&
+                  correlation_id=b84e52fc-5b5d-4926-a6f3-42a4633d25e2&
+                  claims={"premiuminfo":{"nameHash": {"value": "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"},"nameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"addressHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"addressMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"firstNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"firstNameMatch": {"essential": false,"values": ["N-AV"]},"lastNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"lastNameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"postcodeHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"postcodeMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]}},"birthdate": {"value": "1984-07-26"},"birthdateMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"isLostStolen": {"essential": true},"billingSegment": {"essential": true}}'
+
+
+      security:
+        - OAuth2: []  
+      parameters:
+        - name: Content-Type
+          in: header
+          description: The only supported format for the request body is 'application/x-www-form-urlencoded'.
+          required: true
+          schema: 
+            type: string 
+
+
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/postAuthorize_requestBodyParams" 
+            examples:
+              Scope - openid mc_kyc_hashed with mandatory and optional claims:
+                value: 'client_id=as87d8sa7d68sa7d&
+                  scope=openid mc_kyc_hashed&
+                  login_hint=MSISDN:447700900999&
+                  client_name=testclient&
+                  response_type=code&
+                  redirect_uri=https://mycompany.com&
+                  state=sdfdsfdsfds987f98sdfdsfdsf&
+                  nonce=34456456&
+                  correlation_id=b84e52fc-5b5d-4926-a6f3-42a4633d25e2&
+                  claims={"premiuminfo":{"nameHash": {"value": "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"},"nameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"addressHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"addressMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"firstNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"firstNameMatch": {"essential": false,"values": ["N-AV"]},"lastNameHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"lastNameMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"postcodeHash": {"value": "de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3"},"postcodeMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]}},"birthdate": {"value": "1984-07-26"},"birthdateMatch": {"essential": true,"values": ["Y-AV","N-AV","N-NA"]},"isLostStolen": {"essential": true},"billingSegment": {"essential": true}}'
+
+              Scope - openid mc_kyc_plain with mandatory and optional claims:
+                value: 'client_id=as87d8sa7d68sa7d&
+                        scope=openid mc_kyc_plain&
+                        login_hint=MSISDN:447700900999&
+                        client_name=testclient&
+                        response_type=code&
+                        redirect_uri=https://mycompany.com&
+                        state=sdfdsfdsfds987f98sdfdsfdsf&
+                        nonce=34456456&
+                        claims={"premiuminfo":{"name":{"value":"johnbrown"},"nameMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]},"address":{"value":"3645finsburytowerec147qx"},"addressMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]},"firstName":{"value":"john"},"firstNameMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]},"lastName":{"value":"brown"},"lastNameMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]},"postcode":{"value":"ec147qx"},"postcodeMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]}},"birthdate":{"value":"1984-07-26"},"birthdateMatch":{"essential":true,"values":["Y-AV","N-AV","N-NA"]},"isLostStolen":{"essential":true},"billingSegment":{"essential":true}}'                               
+
+      responses: 
+        '302' :
+          description: |
+            Found
+          content:        
+            application/json:
+              examples:
+                Success, correlation_id sent in the request:
+                  value: 'Location: {redirect_uri}?code=687324&state=4387598345h34uihiu&correlation_id=b84e52fc-5b5d-4926-a6f3-42a4633d25e2'
+                Success, correlation_id not sent in the request:
+                  value: 'Location: {redirect_uri}?code=687324&state=4387598345h34uihiu' 
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: |-
+                Location where the user agent must redirect this request to for further action. The redirection will contain the following query parameters:
+
+                | Parameter | Description | 
+                | ---- | ------------------ |
+                | code | Authorisation code returned for web applications when session exists. This value retrieved from the response is used in the <a href='#operation/mobile-connect-token'>Token</a> resource as a body parameter. | 
+                | state | This parameter will only be returned if it was supplied in the request. | 
+        '403':    # status code
+          description: |
+            Forbidden
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | access_denied | Access denied | The <i>client_id</i> / <i>redirect_uri</i> is missing or incorrect. |
+ 
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "access_denied", "error_description": "Access denied"} 
+
+        '500':    # status code
+          description: |
+            Internal Server Error
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | server_error | Internal error occurred | For any internal errors. |
+ 
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "server_error", "error_description": "Internal error occurred"}     
+
+  /v1/mobile-connect/token:
+    post: 
+      summary: Token
+      operationId: mobile-connect-token
+      description: |-
+          <p>The service provider can exchange a one-time auth code for an access token and an id token, to call the premiuminfo endpoint.</p>
+          
+          <details>
+          <summary><b>Sandbox responses</b></summary>
+
+          This API resource is not deployed to the sandbox.</br>
+          </details>
+      x-codeSamples:
+        - lang: 'HTML'
+          label: cURL
+          source: |                 
+              curl -XPOST 
+              -H "Authorization:Basic ZVFPUnhsYUFuZnhHdmloSjB6Sk5GWjNiWklqbXhtcEc6RVlzNkNXRzFPYTVuWnhwSg==" 
+              -H "Content-Type:application/x-www-form-urlencoded"
+              https://api.ee.co.uk/v1/mobile-connect/token
+                
+              grant_type=authorization_code&code=Wo1BXkRz&redirect_uri=https://mycompany.com    
+
+      parameters:
+        - name: Authorization
+          in: header
+          example: Basic <string>
+          description: "To produce the Basic authorisation string, the app’s client ID, ‘:’ and password are concatenated and base64-encoded. This string is prefixed with ‘Basic ’ e.g. 'Basic Z2g3alowRWcyST4YXc5cmJDTGRBWkcxOGZkTkw6TTV5VFFFazFBcFRJMXBBVw=='"
+          required: true
+          schema: 
+            type: string
+        - name: Content-Type
+          in: header
+          description: The only supported format for the request body is 'application/x-www-form-urlencoded'.
+          required: false
+          schema: 
+            type: string        
+
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/token_requestparams"
+            example: grant_type=authorization_code&code=Wo1BXkRz&redirect_uri=https://mycompany.com
+
+      responses: 
+        '200' :
+          description: |
+            OK
+          content:        
+            application/json:
+              schema:
+                $ref: "#/components/schemas/token_SuccessResponseparams"
+              examples:
+                Token response:
+                  value:  {
+                          "access_token": "c333504b953d4a2fb82cd3584d030f2b",
+                          "token_type": "bearer",
+                          "id_token": "<JWT header>.<JWT payload containing claims>.<signature using client_secret>",
+                          "expires_in": "1475744978"
+                        }
+
+                Sample decrypted Id token claims payload:
+                  value: {
+                    "iss": "https://api-sandbox.ee.co.uk",
+                    "sub": "c333504b-953d-4a2f-b82c-d3584d030f2b",
+                    "aud": <client_id>,
+                    "exp": 1311281970,
+                    "iat": 1311280970,
+                    "auth_time": <authentication_time>,
+                    "nonce": "n-0S6_WzA2Mj",
+                    "at_hash" : "1e3990f207ca22c9b8e7046f4afd68b0e2d951e322bed7ebe1f75e2bb3f1471e",
+                    "acr": "L1",
+                    "amr":"RAN",
+                    "azp": "LLoyds"
+                    }  
+
+        '401' : # status code
+          description: |
+              Unauthorized
+              
+              | Error |  Description |
+              | ---- |  ----------- |
+              | access_denied | <i>Authorization</i> basic value is incorrect or missing. |
+              | access_denied | One of the following errors: <br> <ul><li><i>grant_type</i> was not set to 'authorization_code'.</li><li><i>redirect_uri</i> is not valid or is not the same value that was used in the authorize call.</li><li>Client credentials in the basic auth header are invalid. </li></ul> |
+              | Invalid grant, access denied | Mandatory parameter code is missing or invalid. |
+          content:        
+            application/json:
+              schema:
+                $ref: "#/components/schemas/token_FailureResponse"   
+              example: {"error": "access_denied"}  
+          headers:
+            X-EE-Exception:
+              schema:
+                type: string
+              description: Header carrying the message of the exception.
+            X-EE-Exception-Code:
+              schema:
+                type: string
+              description: Header carrying the code of the exception.
+            X-EE-Exception-System:
+              schema:
+                type: string
+              description: Header carrying the system from which the exception has originated.                                   
+
+  /v1/mobile-connect/premiuminfo:
+    get:
+      summary: Get premiuminfo 
+      operationId: mobile-connect-getpremiuminfo
+      description: |-
+        <p>This resource performs a KYC check to compare the supplied details against the stored customer details, to help reduce fraud.</p>
+
+        <details>
+        <summary><b>Sandbox responses</b></summary>
+        <p>The sandbox supports a number of success and failure scenarios which can be simulated by using a MSISDN or PCR value listed in the tables below.</p>
+        <details>
+        <summary><b>Success scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447000543012 | 200 | Successful KYC match for EE PAYM customer. |
+        | 447000815077 | 200 | Successful KYC match for EE PAYG customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYM customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYG customer.  | 
+
+        
+        </details>           
+        <details>
+        <summary><b>Error scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447997045095 | 302 | Customer’s mobile account is not in active/partially active state.	| 
+        | 447996121324 | 302 | Requested product is not in active state.	| 
+        | PCR:01bfae5f-0047-44ec-9da3-dc837e | 302 | Requested PCR reference not found.	|
+        | 447884740574 | 302 | Any technical exception from backend service.	| 
+        | 447884740584 | 302 | SUBSCRIPTION_NOT_FOUND | 
+        | 447884740590 | 302 | Status is not  activated. |
+        | 447884740587 | 302 | MSISDN_NOT_FOUND |
+
+        </details>
+        </details>
+
+      x-codeSamples:
+        - lang: 'HTML'
+          label: cURL
+          source: |   
+                  curl -XGET -H 
+                  "Authorization: Bearer SZrYQsmi9tvGj1XwmKr5lXD4dpXY" 
+                  https://api-sandbox.ee.co.uk/v1/mobile-connect/premiuminfo
+      parameters:
+        - name: Authorization
+          in: header
+          example: Bearer <token>
+          description: "This contains the access token obtained from <a href='#operation/mobile-connect-token'>Token</a> resource</br> The access token is prefixed with the word 'Bearer ' to form the authorisation string."
+          required: true
+          schema: 
+            type: string
+      responses: 
+        '200' :
+          description: |
+            OK
+          content:        
+            application/json:
+              schema:
+                $ref: '#/components/schemas/mc_kyc_plainOrmc_kyc_hashed_successresponseparams'
+              examples:
+                mc_kyc_hashed - address, firstName, postcode and birthdate matched, name not matched:
+                  value:    {
+                                "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                                "nameMatch":"N-AV",
+                                "addressHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                                "addressMatch":"Y-AV",
+                                "firstNameHash": "96d9632f363564cc3032521409cf22a852f2032eec099ed5967c0d000cec607a",
+                                "firstNameMatch":"Y-AV",
+                                "lastNameMatch":"N-AV",
+                                "postcodeHash": "d553aafeb07182de1968faf9a8f5a27c38d4444d75dbd7506dfd8b4475ffb4a0",
+                                "postcodeMatch": "Y-AV",
+                                "birthdate":"1984-07-26",
+                                "birthdateMatch":"Y-AV",
+                                "isLostStolen": "N",
+                                "billingSegment":"PAYM"
+                            }
+                mc_kyc_plain - address, firstName, postcode and birthdate matched, name not matched:
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "nameMatch":"N-AV",
+                              "address":"2rushclosebs320bu",
+                              "addressMatch":"Y-AV",
+                              "firstName": "john",
+                              "firstNameMatch":"Y-AV",
+                              "lastNameMatch":"N-AV",
+                              "postcode": "bs324ju",
+                              "postcodeMatch": "Y-AV",
+                              "birthdate":"1984-07-26",
+                              "birthdateMatch":"Y-AV",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }            
+                mc_kyc_hashed - name matched, address and birthdate (not essential) not matched. Only mandatory fields passed in the request:
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                            "nameMatch":"Y-AV",
+                            "addressMatch":"N-AV",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                        }
+                mc_kyc_plain - name matched, address and birthdate (not essential) not matched. Only mandatory fields passed in the request: 
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "name":"johnbrown",
+                              "nameMatch":"Y-AV",
+                              "addressMatch":"N-AV",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }  
+                mc_kyc_hashed - name and postcode matched, address and birthdate not matched:
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                            "nameMatch":"Y-AV",
+                            "addressMatch":"N-AV",
+                            "postcodeHash":"d553aafeb07182de1968faf9a8f5a27c38d4444d75dbd7506dfd8b4475ffb4a0",
+                            "postcodeMatch":"Y-AV",
+                            "birthdateMatch":"N-NA",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                        }                               
+                mc_kyc_plain - name and postcode matched, address and birthdate (not essential) matched:
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "name":"johnbrown",
+                              "nameMatch":"Y-AV",
+                              "addressMatch":"N-AV",
+                              "postcode":"bs324ju",
+                              "postcodeMatch":"Y-AV",
+                              "birthdateMatch":"N-NA",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }
+                mc_kyc_plain - no matches found:
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameMatch":"N-AV",
+                            "addressMatch":"N-AV",
+                            "birthdateMatch":"N-AV",
+                            "firstNameMatch":"N-AV",
+                            "lastNameMatch":"N-AV",
+                            "postcodeMatch": "N-AV",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                          }          
+                # Response when the requested scope is attributes:
+                #   value: {
+                #             "simChange": "2002-10-02T15:34:00.000Z"
+                #         }      
+        '401' : # status code
+          description: |
+              Unauthorized
+              
+              | Error | Message | Description |
+              | ---- | ------- | ----------- |
+              | Unauthorized | - | <i>Authorization</i> header was not passed in the request. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: 'HTTP/1.1 401 Unauthorized WWW-Authenticate: Bearer realm="example"'
+        '403':    # status code
+          description: |
+            Forbidden
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | access_denied | Access denied | An invalid access token was passed in the request. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "access_denied", "error_description": " Access denied"}     
+        '404':    # status code
+          description: |
+            Not Found
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | not_found | Resource not found | The data requested cannot be found. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "not_found", "error_description": "Resource not found"}     
+        '500':    # status code
+          description: |
+            Internal Server Error
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | server_error | Internal error occurred | For any internal errors. |
+            | server_error | Internal server error | The data passed to the downstream system was invalid or missing. |
+
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "server_error", "error_description": "Internal error occurred"}   
+
+        '503':    # status code
+          description: |
+            Service Unavailable
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | temporarily_unavailable | The service is temporarily unavailable | For any downstream errors. |
+
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "temporarily_unavailable", "error_description": "The service is temporarily unavailable"}  
+
+    post:
+      summary: Post premiuminfo 
+      operationId: mobile-connect-postpremiuminfo
+      description: |-
+        <p>This resource performs a KYC check to compare the supplied details against the stored customer details, to help reduce fraud.</p>     
+
+        <details>
+        <summary><b>Sandbox responses</b></summary>
+        <p>The sandbox supports a number of success and failure scenarios which can be simulated by using a MSISDN or PCR value listed in the tables below.</p>
+        <details>
+        <summary><b>Success scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447000543012 | 200 | Successful KYC match for EE PAYM customer. |
+        | 447000815077 | 200 | Successful KYC match for EE PAYG customer.  | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYM customer. | 
+        | PCR:a1109bce-5cee-4b1c-a36b-ac8f65ea3ecb | 200 | Successful KYC match for EE PAYG customer. | 
+
+        
+        </details>           
+        <details>
+        <summary><b>Error scenarios</b></summary>
+
+        | MSISDN | Sandbox response invoked | Description |
+        | -------------- | ---------------- | ------------- |
+        | 447997045095 | 302 | Customer’s mobile account is not in active/partially active state.	| 
+        | 447996121324 | 302 | Requested product is not in active state.	| 
+        | PCR:01bfae5f-0047-44ec-9da3-dc837e | 302 | Requested PCR reference not found.	|
+        | 447884740574 | 302 | Any technical exception from backend service.	| 
+        | 447884740584 | 302 | SUBSCRIPTION_NOT_FOUND | 
+        | 447884740590 | 302 | Status is not  Activated. |
+        | 447884740587 | 302 | MSISDN_NOT_FOUND |
+
+        </details>
+        </details>
+
+      x-codeSamples:
+        - lang: 'HTML'
+          label: cURL
+          source: |   
+                  curl -XPOST -H 
+                  "Authorization: Bearer SZrYQsmi9tvGj1XwmKr5lXD4dpXY" 
+                  https://api-sandbox.ee.co.uk/v1/mobile-connect/premiuminfo
+      parameters:
+        - name: Authorization
+          in: header
+          example: Bearer <token>
+          description: "This contains the access token obtained from <a href='#operation/mobile-connect-token'>Token</a> resource. </br> The access token is prefixed with the word 'Bearer ' to form the authorisation string."
+          required: true
+          schema: 
+            type: string
+      responses: 
+        '200' :
+          description: |
+            OK
+          content:        
+            application/json:
+              schema:
+                $ref: '#/components/schemas/mc_kyc_plainOrmc_kyc_hashed_successresponseparams'
+              examples:
+                mc_kyc_hashed - address, firstName, postcode and birthdate matched, name not matched:
+                  value:    {
+                                "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                                "nameMatch":"N-AV",
+                                "addressHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                                "addressMatch":"Y-AV",
+                                "firstNameHash": "96d9632f363564cc3032521409cf22a852f2032eec099ed5967c0d000cec607a",
+                                "firstNameMatch":"Y-AV",
+                                "lastNameMatch":"N-AV",
+                                "postcodeHash": "d553aafeb07182de1968faf9a8f5a27c38d4444d75dbd7506dfd8b4475ffb4a0",
+                                "postcodeMatch": "Y-AV",
+                                "birthdate":"1984-07-26",
+                                "birthdateMatch":"Y-AV",
+                                "isLostStolen": "N",
+                                "billingSegment":"PAYM"
+                            }
+                mc_kyc_plain - address, firstName, postcode and birthdate matched, name not matched:
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "nameMatch":"N-AV",
+                              "address":"2rushclosebs320bu",
+                              "addressMatch":"Y-AV",
+                              "firstName": "john",
+                              "firstNameMatch":"Y-AV",
+                              "lastNameMatch":"N-AV",
+                              "postcode": "bs324ju",
+                              "postcodeMatch": "Y-AV",
+                              "birthdate":"1984-07-26",
+                              "birthdateMatch":"Y-AV",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }            
+                mc_kyc_hashed - name matched, address and birthdate (not essential) not matched. Only mandatory fields passed in the request:
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                            "nameMatch":"Y-AV",
+                            "addressMatch":"N-AV",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                        }
+                mc_kyc_plain - name matched, address and birthdate (not essential) not matched. Only mandatory fields passed in the request: 
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "name":"johnbrown",
+                              "nameMatch":"Y-AV",
+                              "addressMatch":"N-AV",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }  
+                mc_kyc_hashed - name and postcode matched, address and birthdate not matched: 
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameHash":"de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3",
+                            "nameMatch":"Y-AV",
+                            "addressMatch":"N-AV",
+                            "postcodeHash":"d553aafeb07182de1968faf9a8f5a27c38d4444d75dbd7506dfd8b4475ffb4a0",
+                            "postcodeMatch":"Y-AV",
+                            "birthdateMatch":"N-NA",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                        }                               
+                mc_kyc_plain - name and postcode matched, address and birthdate (not essential) matched:
+                  value: {
+                              "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                              "name":"johnbrown",
+                              "nameMatch":"Y-AV",
+                              "addressMatch":"N-AV",
+                              "postcode":"bs324ju",
+                              "postcodeMatch":"Y-AV",
+                              "birthdateMatch":"N-NA",
+                              "isLostStolen": "N",
+                              "billingSegment":"PAYM"
+                          }
+                mc_kyc_plain - no matches found:
+                  value: {
+                            "sub":"5f90512d-972d-4def-bf90-9ef0ef2e5d2d",
+                            "nameMatch":"N-AV",
+                            "addressMatch":"N-AV",
+                            "birthdateMatch":"N-AV",
+                            "firstNameMatch":"N-AV",
+                            "lastNameMatch":"N-AV",
+                            "postcodeMatch": "N-AV",
+                            "isLostStolen": "N",
+                            "billingSegment":"PAYM"
+                          }          
+
+                # Response when the requested scope is attributes:
+                #   value: {
+                #             "simChange": "2002-10-02T15:34:00.000Z"
+                #         }      
+        '401' : # status code
+          description: |
+              Unauthorized
+              
+              | Error | Message | Description |
+              | ---- | ------- | ----------- |
+              | Unauthorized | - | <i>Authorization</i> header was not passed in the request. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: 'HTTP/1.1 401 Unauthorized
+                      WWW-Authenticate: Bearer realm="example"' 
+        '403':    # status code
+          description: |
+            Forbidden
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | access_denied | Access denied | An invalid access token was passed in the request. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "access_denied", "error_description": " Access denied"}     
+        '404':    # status code
+          description: |
+            Not Found
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | not_found | Resource not found | The data requested cannot be found. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "not_found", "error_description": "Resource not found"}     
+        '500':    # status code
+          description: |
+            Internal Server Error
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | server_error | Internal error occurred | For any internal errors. |
+            | server_error | Internal server error | The data passed to the downstream system was invalid or missing. |
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "server_error", "error_description": "Internal error occurred"}   
+
+        '503':    # status code
+          description: |
+            Service Unavailable
+
+            | Error | Message   | Description |
+            | ---- | -------   | ----------- |
+            | temporarily_unavailable | The service is temporarily unavailable | For any downstream errors. |
+
+          content:        
+            application/json:
+             schema:
+                $ref: '#/components/schemas/FailureResponse'
+             example: {"error": "temporarily_unavailable", "error_description": "The service is temporarily unavailable"}  
+
+
+components:
+  securitySchemes:
+
+    OAuth2:
+      type: oauth2
+      description: This API requires [OAuth API](/node/360) validation. 
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.platform.bt.com/oauth/accesstoken?grant_type=client_credentials
+          scopes: {}
+            
+  schemas:
+    trackingHeader:
+      type: string
+      description: A unique client reference used to track the transaction end to end; it is recommended that the developer and app names are included for ease of debugging. The recommended format is UUID (a 36-character alphanumeric string "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+      pattern: ^[\w.~:@-]{1,255}$  
+
+#Response parameters for KYC(scope is mc_kyc_plain or mc_kyc_hashed)
+    mc_kyc_plainOrmc_kyc_hashed_successresponseparams:
+      type: object
+      required:
+        - sub
+        - name or nameHash
+        - nameMatch
+        - address or addressHash
+        - addressMatch
+      properties:
+        sub:
+          type: string
+          description: |-
+            <p>Pseudonymous Customer Reference, a globally unique identifier for a customer. This parameter is conditional mandatory.</p>
+
+            
+            
+
+        name or nameHash:
+          type: string
+          description: |- 
+            
+            <p>Normalised concatenated first name and last name requested for KYC match (e.g. 'johnbrown').</p>
+            <p>For 'mc_kyc_plain' scope, plain text will be passed in the name field. <br>For 'mc_kyc_hashed' scope the text will be hashed and passed in the nameHash field (e.g. de9f2c7fd25e1b3afad3e85a0bd22d9b100db4b3). <br>The relevant field is available only if nameMatch = 'Y-AV'. </p> 
+        nameMatch:
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>
+        address or addressHash:
+          type: string
+          description: |-
+            <p>Normalised address requested for KYC match (e.g. 2rushclosebs320bu).</p>  
+            <p>For 'mc_kyc_plain' scope, plain text will be passed in the address field.<br> For 'mc_kyc_hashed' scope the text will be hashed and passed in address hash field (e.g. de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3).</p>  
+            <p>The relevant field is available only if addressMatch = 'Y-AV'.</p>    
+        addressMatch:
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>
+        firstName or firstNameHash:    
+          type: string
+          description: |-
+            <p>Normalised first name (e.g. 'john').</p>  
+            <p>For 'mc_kyc_plain' scope, plain text will be passed in the firstName field.<br> For 'mc_kyc_hashed' scope the text will be hashed and passed in the firstNameHash field (e.g. 96d9632f363564cc3032521409cf22a852f2032eec099ed5967c0d000cec607a).</p>  
+            <p>The relevant field is available only if firstNameMatch = 'Y-AV'.</p>  
+        firstNameMatch:
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>            
+        lastName or lastNameHash:
+          type: string
+          description: |-
+            <p>Normalised last name requested for KYC match (e.g. 'brown').</p>  
+            <p>For 'mc_kyc_plain' scope, plain text will be passed in the lastName field.<br> For 'mc_kyc_hashed' scope the text will be hashed and passed in the lastNameHash field (e.g. 799ef92a11af918e3fb741df42934f3b568ed2d93ac1df74f1b8d41a27932a6f).</p>  
+            <p>The relevant field is available only if lastNameMatch = 'Y-AV'.</p>          
+        lastNameMatch:
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>   
+        postcode or postcodeHash:
+          type: string
+          description: |-         
+            <p>Normalised postcode requested for KYC match (e.g. 'bs324ju').</p>  
+            <p>For 'mc_kyc_plain' scope, plain text will be passed in the postcode field.<br> For 'mc_kyc_hashed' scope the text will be hashed and passed in the postcodeHash field (e.g. d553aafeb07182de1968faf9a8f5a27c38d4444d75dbd7506dfd8b4475ffb4a0).</p>  
+            <p>The relevant field is available only if postcodeMatch = 'Y-AV'.</p> 
+        postcodeMatch:
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>
+        birthdate:
+          type: string
+          description: |- 
+            <p>End user’s birthday, represented in YYYY-MM-DD format. </p><p>This field is available only if birthdateMatch = 'Y-AV'.</p>
+            
+        birthdateMatch:  
+          type: string
+          description: |- 
+            <p>'Y-AV' - the match is successful, data is available.</p>
+            <p>'N-NA' - the match failed, data is not available.</p>
+            <p>'N-AV' - the match failed, data is available.</p>
+               
+        isLostStolen:
+          type: boolean
+          description: |-
+            <p>Indicates whether the device has been reported as lost or stolen.</p>
+            
+        billingSegment:    
+          type: string
+          description: |-
+            <p>The mobile customer’s segment ('PAYG', 'PAYM', or 'Business').</p>
+            
+
+
+    token_requestparams:
+      required:
+        - grant_type
+        - code
+        - redirect_uri
+      properties:
+        grant_type:
+          type: string
+          description: The only supported value is 'authorization_code'.
+        code:
+          type: string
+          description: An authorisation code returned from a successful authorisation request which will be associated with the requested scope.        
+        redirect_uri:
+          type: string
+          description: The location where the authorisation server sends the user once the app has been successfully authorised and granted an authorisation code or access token.
+
+
+    token_SuccessResponseparams:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - id_token
+        - expires_in        
+      properties:
+        access_token:
+          type: string
+          description: OAuth 2.0 access token valid for one time only which is used to get the PremiumInfo/ UserInfo object from the PremiumInfo/UserInfo endpoint and can be reused for accessing other protected resources, if required. Requested scope in auth_code should be sent in <i>access_token</i>. 
+
+        token_type:
+          type: string
+          description: This will always be set to 'bearer'.
+
+        id_token:
+          type: string
+          $ref: "#/components/schemas/idTokenClaimsArray" 
+          description: This the additional token used in OIDC to provide the identity token claim. The ID token value associated with the authentication session, and it is a security token that contains claims about the Authentication of an End-User by an Authorisation Server when using a client, and potentially other requested Claims. <br>The format of the ID token is a JSON Web Token (JWT).
+          
+        expires_in:
+          type: string
+          description: A string representing the number of seconds the access token will be active for.
+
+    idTokenClaimsArray: 
+      properties:
+        iss:
+          type: string
+          description: Issuer identifier. It is a case-sensitive HTTPS based URL. It may contain the port and path element but no query parameters.
+        sub:
+          type: string
+          description: Subject identifier. A globally unique identifier (PCR) of the end user to work in a federated environment. It is a case-sensitive ASCII string with a maximum length of 255. The value must not contain the MSISDN.
+        aud:
+          type: string
+          description: The intended audience for the ID token. It is an array of case-sensitive strings. It must contain the client_id of the relying party/client, and may contain identifiers of other optional audiences. If there is one audience, the value may be a single case-sensitive string or an array of case-sensitive strings with only one element. 
+        exp:
+          type: string
+          description: The expiration time after which the ID token must not be accepted for processing. <br> The format is the number of seconds from the time of issue of the ID token as measured in UTC until the date/time specified. The expiration date/time must be in the future.
+        iat:
+          type: string
+          description: The time of issue of the ID token. <br>The format is the number of seconds as measured in UTC until the date/time specified.
+        auth_time:
+          type: string
+          description: Time of end user authentication or authorisation.<br> The format is the number of seconds from 2017-01-01T0:0:0Z as measured in UTC until the date/time specified.
+        nonce:
+          type: string
+          description: Opaque string value to associate the relying party/client session with the ID token, to avoid the replay attacks.
+
+        at_hash:
+          type: string
+          description: A base64url encoded of hash of <i>access_token</i> (recommended hashing algorithm SHA-256)
+        acr:
+          type: string
+          description: A mandatory authentication context class reference. It is a case-sensitive string, representing the achieved authentication by the ID GW/Authorisation server.
+        amr:
+          type: string
+          description: An array of case-sensitive strings to indicate the authentication method used. 
+        azp:  
+          type: string
+          description: The party to which the ID token is issued. 
+
+
+    postAuthorize_requestBodyParams:
+      required:
+        - client_id
+        - scope
+        - login_hint
+        - response_type
+        - redirect_uri
+        - state
+        - nonce
+        - claims
+      properties:
+        client_id:
+          description: Client identifier/API key of the partner.
+          type: string
+          maxLength: 35
+        scope:
+          description: |- 
+            <p>Space delimited parameters identifying the requested scopes.</p>
+            <p>The allowed scope combinations are: 'openid mc_kyc_hashed' and 'openid mc_kyc_plain'.</p>
+          type: string  
+        login_hint:
+          description: |-
+           <p>This can contain either a plain text MSISDN, the encrypted MSISDN or a PCR (Pseudonymous Customer Reference).</p>
+           <p>e.g. 'MSISDN:447700900999', 'ENCR_MSISDN:xxxxxxxx' or 'PCR:f70f33e4-64d7-49de-b7a6-51b560819b84'</p>
+          type: string
+        client_name:
+          description: |-
+           <p>A short application name as indicated in the Discovery API. </p>
+           <p>Alphanumeric characters are supported</p>
+          type: string
+        response_type:
+          description: |-
+           <p>This should always be set to 'code'.</p>
+          type: string
+        redirect_uri:
+          description: |-
+           <p>The location where the authorisation server sends the user once the app has been successfully authorised and granted an authorisation code or access token.</p>
+          type: string  
+        state:
+          description: |-
+           <p>This parameter will hold the session information to echo back to the consumer.</p>
+           <p>Alphanumeric characters are supported.</p>        
+          type: string   
+        nonce:
+          description: |-
+           <p>Value will generate randomly to valid single session associate with an ID token and to mitigate any replay attacks.</p>
+           <p>Alphanumeric characters are supported.</p>        
+          type: string 
+        claims:
+          description: |-
+            <p>KYC Product: JSON containing the consumer attributes submitted by the partner relating to the customer.</p>
+            <p>The <i>name</i> and <i>address</i> values accept alphanumeric characters only.</p>
+          type: string
+          format: json 
+
+        correlation_id:
+          description: |-
+            <p>This is optional which is used to track unique transactions end to endpoint.</p>
+            <p><i>correlation_id</i> must be provided in UUID format (a 36-character alphanumeric string 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX').</p> 
+          type: string                    
+
+    FailureResponse:
+       type: object
+       required:
+        - error
+        - error_description
+       properties:
+        error:
+          type: string
+          description: Represents the error code. 
+        error_description:
+          type: string
+          description: Represents the error message. 
+
+    token_FailureResponse:  
+       type: object
+       required:
+        - error
+       properties:
+        error:
+          type: string
+          description: Represents the error.              
